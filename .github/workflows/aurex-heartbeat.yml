@@ -1,5 +1,9 @@
 name: Aurex heartbeat (safe mode)
 on:
+  push:
+    paths:
+      - 'heartbeat.py'
+      - '.github/workflows/aurex-heartbeat.yml'
   workflow_dispatch:
   schedule:
     - cron: '*/15 * * * *'
