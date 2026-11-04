@@ -5,6 +5,7 @@ on:
       - 'model_probe.py'
       - 'seam_evaluator.py'
       - 'fixtures/**'
+      - 'aurex_core/**'
       - 'tests/**'
       - '.github/workflows/aurex-code-check.yml'
   workflow_dispatch:
@@ -20,7 +21,7 @@ jobs:
         with:
           python-version: '3.12'
       - name: Syntax check
-        run: python -m compileall -q model_probe.py seam_evaluator.py postmark_watcher.py tests
+        run: python -m compileall -q model_probe.py seam_evaluator.py postmark_watcher.py aurex_core tests
       - name: Offline unit tests (no API key needed)
         run: |
           python -m unittest discover -s tests -v
