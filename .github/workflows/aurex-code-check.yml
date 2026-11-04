@@ -3,6 +3,8 @@ on:
   push:
     paths:
       - 'model_probe.py'
+      - 'aurex_runner.py'
+      - '.github/workflows/aurex-agent-cycle.yml'
       - 'seam_evaluator.py'
       - 'fixtures/**'
       - 'aurex_core/**'
@@ -21,7 +23,7 @@ jobs:
         with:
           python-version: '3.12'
       - name: Syntax check
-        run: python -m compileall -q model_probe.py seam_evaluator.py postmark_watcher.py aurex_core tests
+        run: python -m compileall -q aurex_runner.py model_probe.py seam_evaluator.py postmark_watcher.py aurex_core tests
       - name: Offline unit tests (no API key needed)
         run: |
           python -m unittest discover -s tests -v
