@@ -91,3 +91,7 @@ Identity and voice, permitted communication channels, which actions may be unatt
 ## Current implementation
 
 The `aurex_core/` package implements event normalization, journal deduplication, decision policy and dry-run planning with offline tests. Existing scripts are experimental probes, not integrated autonomous agents. Credentials, Postmark write adapter, model inference and unattended replies are **not configured**.
+
+## Autonomy foundation implementation
+
+The design choice is **self-directed agent**. See [AUTONOMY_CONTRACT.md](AUTONOMY_CONTRACT.md). The first offline implementation includes `aurex_core/goals.py` (goal selection), `memory.py` (bounded evidence context), `outbox.py` (draft-only persistent queue), and `runtime.py` (bounded event cycle). These are not connected to an LLM or Postmark outbound API; successful CI execution is not yet verified.
