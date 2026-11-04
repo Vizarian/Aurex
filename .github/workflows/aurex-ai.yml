@@ -3,6 +3,10 @@ on:
   issues:
     types: [opened, reopened]
   workflow_dispatch:
+  push:
+    paths:
+      - 'aurex_ai_agent.py'
+      - '.github/workflows/aurex-ai.yml'
 permissions:
   contents: read
   issues: write
@@ -12,7 +16,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   analyze:
-    if: github.event_name == 'issues'
+    if: github.event_name == 'issues' || github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -26,4 +30,5 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           AUREX_MODEL: openai/gpt-4o-mini
+          AUREX_ISSUE_NUMBER: '5'
         run: python aurex_ai_agent.py
