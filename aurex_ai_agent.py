@@ -65,6 +65,17 @@ def run():
     title = str(issue.get("title", ""))[:250]
     body = str(issue.get("body") or "")[:8000]
     prompt = "Repository: " + repo + "\nIssue #" + str(number) + "\nTitle: " + title + "\nDescription:\n" + body
+    # Give the model actual source rather than only an issue description.
+    import base64
+    source_context = []
+    for source_path in ("aurex_core/runtime.py", "aurex_core/policy.py", "aurex_runner.py"):
+        try:
+            file_data = request_json(API + "/repos/" + repo + "/contents/" + source_path, token)
+            decoded = base64.b64decode(file_data["content"]).decode("utf-8")
+            source_context.append("FILE " + source_path + "\\n" + decoded[:4500])
+        except (OSError, KeyError, ValueError) as exc:
+            print("AUREX_SOURCE_UNAVAILABLE " + source_path + " " + type(exc).__name__, flush=True)
+    prompt += "\\n\\nRepository source:\\n" + "\\n\\n".join(source_context)
     print("AUREX_MODEL_REQUEST issue=" + str(number), flush=True)
     result = request_json(MODELS, token, {
         "model": os.environ.get("AUREX_MODEL", "openai/gpt-4o-mini"),
