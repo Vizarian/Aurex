@@ -16,7 +16,11 @@ def cycle(events, journal, outbox, policy, max_events=3, stop_path="state/STOP")
     tasks = prioritize(propose(events[:max_events]))
     for event in events[:max_events]:
         assert_running(stop_path)
-        # Reserve action capacity before journaling; never mark an event processed\n        # if this run cannot complete its permitted decision.\n        if len(results) >= policy.max_actions_per_run:\n            raise PermissionError("Run action limit exceeded")\n        decision = engine.handle(event)
+        # Reserve action capacity before journaling; never mark an event processed 
+        # if this run cannot complete its permitted decision. 
+        if len(results) >= policy.max_actions_per_run: 
+            raise PermissionError("Run action limit exceeded") 
+        decision = engine.handle(event)
         if decision.action == "draft":
             policy.check("draft", already_taken=len(results))
             outbox.enqueue(event.key, event.source, decision.draft)
