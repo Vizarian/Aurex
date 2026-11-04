@@ -6,6 +6,7 @@ on:
   push:
     paths:
       - 'aurex_ai_agent.py'
+      - 'tests/test_aurex_ai_agent.py'
       - '.github/workflows/aurex-ai.yml'
 permissions:
   contents: read
@@ -26,6 +27,8 @@ jobs:
           python-version: '3.12'
       - name: Validate agent
         run: python -m py_compile aurex_ai_agent.py
+      - name: Run offline agent tests
+        run: python -m unittest discover -s tests -p 'test_aurex_ai_agent.py' -v
       - name: Confirm runtime and permissions
         run: |
           echo "event=${{ github.event_name }} repository=${{ github.repository }}"
