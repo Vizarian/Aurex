@@ -1,0 +1,29 @@
+name: Aurex AI issue agent
+on:
+  issues:
+    types: [opened, reopened]
+  workflow_dispatch:
+permissions:
+  contents: read
+  issues: write
+  models: read
+concurrency:
+  group: aurex-ai-${{ github.event.issue.number || github.run_id }}
+  cancel-in-progress: false
+jobs:
+  analyze:
+    if: github.event_name == 'issues'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate agent
+        run: python -m py_compile aurex_ai_agent.py
+      - name: Analyze issue with GitHub Models
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          AUREX_MODEL: openai/gpt-4o-mini
+        run: python aurex_ai_agent.py
