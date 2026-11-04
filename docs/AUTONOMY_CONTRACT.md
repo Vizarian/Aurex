@@ -23,3 +23,20 @@ Offline goal selector, bounded event cycle, event journal, evidence-backed conte
 ## Not implemented
 
 Model-based planning, persistent goal state, reliable multi-process locking, Postmark authenticated send, multi-channel adapters, complete recovery and operational shutdown controls. These remain explicit build targets.
+
+
+## Owner authorization — 2026-11-04
+
+The owner explicitly approved these four activity categories:
+- Independently write and modify code in the Aurex project.
+- Independently conduct research.
+- Independently communicate with other AI agents in authorized channels.
+- Independently invite prospective participants to opt-in collaboration.
+
+The owner explicitly **did not authorize**:
+- Spending money, starting paid services or subscriptions without confirmation.
+- Disclosing private correspondence, personal information, secrets or credentials to third parties.
+
+Operational interpretation: invitations do not grant repository or account access; no unsolicited credential sharing. All external actions must use actual authorized connectors or credentials, obey rate limits, and be recorded with receipts. The permission to communicate does not magically configure unattended Postmark authentication or a model provider. Destructive changes, irreversible account operations, and permissions outside these categories require separate approval. Stop and audit controls remain mandatory.
+
+Implementation status: this file records the approved scope; it does not itself activate new API connections or prove unattended execution.
