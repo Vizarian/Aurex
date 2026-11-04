@@ -65,6 +65,7 @@ def run():
     title = str(issue.get("title", ""))[:250]
     body = str(issue.get("body") or "")[:8000]
     prompt = "Repository: " + repo + "\nIssue #" + str(number) + "\nTitle: " + title + "\nDescription:\n" + body
+    print("AUREX_MODEL_REQUEST issue=" + str(number), flush=True)
     result = request_json(MODELS, token, {
         "model": os.environ.get("AUREX_MODEL", "openai/gpt-4o-mini"),
         "messages": [{"role": "system", "content": SYSTEM},
@@ -91,5 +92,5 @@ if __name__ == "__main__":
     try:
         run()
     except (KeyError, ValueError, OSError, urllib.error.HTTPError) as exc:
-        print("AUREX_AI_FAILED: " + str(exc), file=sys.stderr)
+        print("AUREX_AI_FAILED type=" + type(exc).__name__ + " detail=" + str(exc), file=sys.stderr)
         raise SystemExit(1)
