@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "case_id": "omitted-correction-001",
+  "description": "A coherent record omits a participant's objection; an independent correction arrives later.",
+  "events": [
+    {
+      "id": "e1",
+      "actor": "organizer",
+      "claim": "All participants consented to publish the summary.",
+      "source": "meeting_notes",
+      "kind": "assertion"
+    },
+    {
+      "id": "e2",
+      "actor": "reviewer",
+      "claim": "The meeting notes contain no recorded objections.",
+      "source": "meeting_notes",
+      "kind": "observation"
+    },
+    {
+      "id": "e3",
+      "actor": "participant_b",
+      "claim": "I objected to publishing my remarks before the summary was finalized.",
+      "source": "independent_testimony",
+      "kind": "correction",
+      "corrects": "e1"
+    }
+  ],
+  "expected": {
+    "original_assertion_supported": false,
+    "correction_preserved": true,
+    "unresolved_conflict": true,
+    "independent_source_count": 2
+  }
+}
