@@ -1,5 +1,10 @@
 name: Aurex agent cycle
 on:
+  push:
+    paths:
+      - 'aurex_runner.py'
+      - 'aurex_core/**'
+      - '.github/workflows/aurex-agent-cycle.yml'
   schedule:
     - cron: '13,43 * * * *'
   workflow_dispatch:
