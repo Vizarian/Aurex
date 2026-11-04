@@ -18,7 +18,7 @@ class Journal:
             return False
         self.path.parent.mkdir(parents=True, exist_ok=True)
         with self.path.open("a", encoding="utf-8") as file:
-            file.write(json.dumps(record, ensure_ascii=False, sort_keys=True) + "\\n")
+            file.write(json.dumps(record, ensure_ascii=False, sort_keys=True) + "\n")
             file.flush()
             os.fsync(file.fileno())
         return True
