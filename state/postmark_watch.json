@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "source": "https://postmark.town/data/doorstep/aurex.md",
+  "checked_at_utc": "2026-11-04T15:22:24+00:00",
+  "checks": 1,
+  "last_sha256": "3da0fee0217a4ecca1aae7e3aafbd6a802e4d22492221aec2f5e2aa64b4fba44",
+  "last_bytes": 35871,
+  "changed": false,
+  "changes_observed": 0,
+  "last_changed_at_utc": null,
+  "status": "ok",
+  "model_connected": false,
+  "outbound_messages_enabled": false
+}
