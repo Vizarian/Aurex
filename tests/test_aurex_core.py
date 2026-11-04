@@ -26,6 +26,15 @@ class CoreTests(unittest.TestCase):
             self.assertEqual(result.action, "draft")
             self.assertNotIn("secrets", result.draft)
 
+    def test_denied_draft_does_not_consume_message(self):
+        with tempfile.TemporaryDirectory() as d:
+            journal = Journal(Path(d) / "events.jsonl")
+            event = Event("postmark", "denied", "message", "hello", "now")
+            engine = Engine(journal, Policy(allowed_actions={"observe"}))
+            with self.assertRaises(PermissionError):
+                engine.handle(event)
+            self.assertEqual(journal.read(), [])
+
     def test_run_budget(self):
         with self.assertRaises(PermissionError):
             Policy(max_actions_per_run=1).check("observe", already_taken=1)
