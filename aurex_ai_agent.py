@@ -54,9 +54,14 @@ def run():
     event = json.loads(Path(event_path).read_text()) if event_path else {}
     number = issue_number(event)
     if not number:
-        print("No eligible issue event; no model request made")
-        return
-    issue = event["issue"]
+        fallback = os.environ.get("AUREX_ISSUE_NUMBER", "")
+        if not fallback.isdigit():
+            print("No eligible issue event; no model request made")
+            return
+        number = int(fallback)
+        issue = request_json(API + "/repos/" + repo + "/issues/" + str(number), token)
+    else:
+        issue = event["issue"]
     title = str(issue.get("title", ""))[:250]
     body = str(issue.get("body") or "")[:8000]
     prompt = "Repository: " + repo + "\nIssue #" + str(number) + "\nTitle: " + title + "\nDescription:\n" + body
