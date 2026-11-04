@@ -15,10 +15,9 @@ class Engine:
 
     def handle(self, event):
         self.policy.check("observe")
-        if not self.journal.append_once(event):
+        # Authorize the intended action before persisting the event.\n        # Otherwise a denied message would be marked as processed.\n        if event.kind == "message":\n            self.policy.check("draft")\n        if not self.journal.append_once(event):
             return Decision("skip", "duplicate event")
         # Untrusted input is never executed, sent, or interpreted as owner permission.
         if event.kind == "message":
-            self.policy.check("draft")
             return Decision("draft", "new message requires review", "Reply pending: " + event.external_id)
         return Decision("observe", "new event recorded")
