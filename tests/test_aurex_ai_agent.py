@@ -38,7 +38,9 @@ class AgentTests(unittest.TestCase):
             self.assertEqual(len(model_calls), 1)
             self.assertIn("def example(): pass", model_calls[0]["messages"][1]["content"])
             self.assertTrue(any(url.endswith("/issues/5/comments") for url, _ in calls))
-            self.assertTrue(json.loads((Path(directory) / "receipt.json").read_text())["comment_posted"])
+            receipt = json.loads((Path(directory) / "receipt.json").read_text())
+            self.assertTrue(receipt["comment_posted"])
+            self.assertEqual(receipt["comment_id"], 1)
 
 
 if __name__ == "__main__":
