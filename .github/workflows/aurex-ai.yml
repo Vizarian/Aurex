@@ -34,7 +34,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           AUREX_MODEL: openai/gpt-4o-mini
-          AUREX_ISSUE_NUMBER: '5'
+          AUREX_ISSUE_NUMBER: '16'
         run: python aurex_ai_agent.py
 
   autonomous-healthcheck:
