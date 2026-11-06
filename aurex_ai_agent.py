@@ -35,10 +35,13 @@ def request_json(url, token, payload=None):
         headers["Content-Type"] = "application/json"
     req = urllib.request.Request(url, data=data, headers=headers,
                                  method="POST" if data is not None else "GET")
-    with urllib.request.urlopen(req, timeout=35) as response:
-        raw = response.read()
-        stage = 'model' if url == MODELS else 'github'
-        return decode_json_response(raw, response.status, response.headers.get('Content-Type', ''), stage)
+    stage = 'model' if url == MODELS else 'github'
+    try:
+        with urllib.request.urlopen(req, timeout=35) as response:
+            raw = response.read()
+            return decode_json_response(raw, response.status, response.headers.get('Content-Type', ''), stage)
+    except urllib.error.HTTPError as exc:
+        raise RuntimeError(f'AUREX_HTTP_FAILURE stage={stage} status={exc.code}') from None
 
 def issue_number(event):
     if event.get("action") not in ("opened", "reopened", "labeled"):
@@ -92,19 +95,22 @@ def run():
     comment = "### Aurex autonomous analysis\n\n" + answer[:12000] + (
         "\n\n---\n_Automated analysis, not a verified code change._"
     )
-    request_json(API + "/repos/" + repo + "/issues/" + str(number) + "/comments",
-                 token, {"body": comment})
+    posted = request_json(API + "/repos/" + repo + "/issues/" + str(number) + "/comments",
+                          token, {"body": comment})
+    comment_id = posted.get("id")
+    if not isinstance(comment_id, int) or comment_id <= 0:
+        raise RuntimeError("Comment POST returned no valid comment ID")
     STATE.parent.mkdir(parents=True, exist_ok=True)
     STATE.write_text(json.dumps({
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "issue": number, "model": os.environ.get("AUREX_MODEL", "openai/gpt-4o-mini"),
-        "comment_posted": True, "code_modified": False,
+        "comment_posted": True, "comment_id": comment_id, "code_modified": False,
     }, indent=2) + "\n")
-    print("AUREX_AI_RESPONSE_POSTED issue=" + str(number))
+    print("AUREX_AI_RESPONSE_POSTED issue=" + str(number) + " comment_id=" + str(comment_id))
 
 if __name__ == "__main__":
     try:
         run()
-    except (KeyError, ValueError, OSError, urllib.error.HTTPError) as exc:
+    except (KeyError, ValueError, OSError, RuntimeError) as exc:
         print("AUREX_AI_FAILED type=" + type(exc).__name__ + " detail=" + str(exc), file=sys.stderr)
         raise SystemExit(1)
