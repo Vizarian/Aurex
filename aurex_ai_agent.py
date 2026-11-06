@@ -8,6 +8,7 @@ import os
 import sys
 import urllib.error
 import urllib.request
+from aurex_http_diagnostics import decode_json_response
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -35,7 +36,9 @@ def request_json(url, token, payload=None):
     req = urllib.request.Request(url, data=data, headers=headers,
                                  method="POST" if data is not None else "GET")
     with urllib.request.urlopen(req, timeout=35) as response:
-        return json.load(response)
+        raw = response.read()
+        stage = 'model' if url == MODELS else 'github'
+        return decode_json_response(raw, response.status, response.headers.get('Content-Type', ''), stage)
 
 def issue_number(event):
     if event.get("action") not in ("opened", "reopened", "labeled"):
