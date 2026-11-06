@@ -26,9 +26,9 @@ jobs:
         with:
           python-version: '3.12'
       - name: Validate agent
-        run: python -m py_compile aurex_ai_agent.py
+        run: python -m py_compile aurex_ai_agent.py aurex_http_diagnostics.py
       - name: Run offline agent tests
-        run: python -m unittest discover -s tests -p 'test_aurex_ai_agent.py' -v
+        run: python -m unittest discover -s tests -p 'test_aurex*.py' -v
       - name: Confirm runtime and permissions
         run: |
           echo "event=${{ github.event_name }} repository=${{ github.repository }}"
