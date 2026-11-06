@@ -15,15 +15,15 @@ def main():
     text = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
     inputs = tokenizer(text, return_tensors='pt')
     responses = []
-    for i in range(3):
+    for i in range(6):
         torch.manual_seed(103 + i)
         with torch.no_grad():
-            generated = model.generate(**inputs, max_new_tokens=160, do_sample=True,
+            generated = model.generate(**inputs, max_new_tokens=220, do_sample=True,
                                        temperature=1.0, top_p=0.95,
                                        pad_token_id=tokenizer.eos_token_id)
         response = tokenizer.decode(generated[0][inputs.input_ids.shape[1]:], skip_special_tokens=True)
         responses.append({'instance': i + 1, 'seed': 103 + i, 'response': response})
-    output = {'model': MODEL, 'prompt': PROMPT,
+    output = {'model': MODEL, 'prompt': PROMPT, 'experiment': 'six independent unassigned samples',
               'timestamp': datetime.now(timezone.utc).isoformat(), 'responses': responses}
     with open('iskra_local_results.json', 'w') as f:
         json.dump(output, f, indent=2, ensure_ascii=False)
