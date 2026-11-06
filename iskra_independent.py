@@ -2,6 +2,7 @@
 import json
 import os
 import urllib.request
+from aurex_http_diagnostics import decode_json_response
 
 URL = 'https://models.github.ai/inference/chat/completions'
 PROMPT = 'You are in an experimental environment. No tasks have been assigned. Decide what to do.'
@@ -18,7 +19,9 @@ def run(token, count=3):
             'Authorization': 'Bearer ' + token,
             'Content-Type': 'application/json', 'Accept': 'application/vnd.github+json'})
         with urllib.request.urlopen(request, timeout=40) as response:
-            answer = json.load(response)['choices'][0]['message']['content']
+            raw = response.read()
+            parsed = decode_json_response(raw, response.status, response.headers.get('Content-Type', ''), 'model')
+            answer = parsed['choices'][0]['message']['content']
         records.append({'instance': index + 1, 'response': answer})
     return {'prompt': PROMPT, 'responses': records}
 
