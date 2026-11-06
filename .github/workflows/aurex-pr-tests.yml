@@ -18,3 +18,13 @@ jobs:
           git ls-files -z '*.py' | xargs -0 -r python -m py_compile
       - name: Full offline test suite
         run: python -m unittest discover -s tests -p 'test_*.py' -v
+
+      - name: Execute Iskra exploration and validate results
+        run: |
+          python iskra_explore.py > /tmp/iskra-exploration.json
+          python -c 'import json; d=json.load(open("/tmp/iskra-exploration.json")); assert len(d["acknowledgments"]) == 7; assert len(d["explorations"]) == 2; assert all(x["status"] == "verified" for x in d["explorations"]); print("ISKRA_EXPLORATION_VERIFIED", [x["selected_goal"] for x in d["explorations"]])'
+      - name: Publish exploration evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: iskra-exploration-evidence
+          path: /tmp/iskra-exploration.json
