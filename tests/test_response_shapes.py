@@ -88,13 +88,34 @@ class MeasuredResponseShapeTests(unittest.TestCase):
 class ModelShapeTests(unittest.TestCase):
     """JSON 200 is not proof of a completion; the failure must name the shape."""
 
-    def test_error_object_with_success_status_names_its_keys(self):
+    def test_error_object_with_success_status_names_its_shape(self):
         with self.assertRaises(RuntimeError) as raised:
             model_text({'message': 'SENSITIVE_UPSTREAM_TEXT', 'status': 'error'})
         message = str(raised.exception)
         self.assertIn('AUREX_MODEL_SHAPE_INVALID stage=model', message)
-        self.assertIn('keys=message,status', message)
+        self.assertIn('choices=missing', message)
+        self.assertIn('top_level_keys=2', message)
         self.assertNotIn('SENSITIVE_UPSTREAM_TEXT', message)
+        self.assertNotIn('message,status', message)
+
+    def test_choices_key_of_wrong_type_reports_not_list(self):
+        with self.assertRaises(RuntimeError) as raised:
+            model_text({'choices': {'0': 'not a list'}})
+        message = str(raised.exception)
+        self.assertIn('choices=not_list', message)
+        self.assertIn('top_level_keys=1', message)
+
+    def test_sensitive_key_name_never_reaches_the_diagnostic(self):
+        """Review fixture: the marker sits in the KEY NAME, not in a value."""
+        marker = 'SENSITIVE_KEY_NAME_DO_NOT_LOG'
+        with self.assertRaises(RuntimeError) as raised:
+            model_text({marker: 'x', 'status': 'error'})
+        message = str(raised.exception)
+        self.assertIn('AUREX_MODEL_SHAPE_INVALID stage=model', message)
+        self.assertIn('choices=missing', message)
+        self.assertIn('top_level_keys=2', message)
+        self.assertNotIn(marker, message)
+        self.assertNotIn('DO_NOT_LOG', message)
 
     def test_empty_choices_is_a_shape_error(self):
         with self.assertRaisesRegex(RuntimeError, 'content=absent'):

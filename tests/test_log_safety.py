@@ -96,8 +96,24 @@ class LogSafetyTests(unittest.TestCase):
         _, stderr, code = _run_agent(monkey_response=stub)
         self.assertEqual(code, 1)
         self.assertIn('AUREX_MODEL_SHAPE_INVALID', stderr)
-        self.assertIn('keys=message,status', stderr)
+        self.assertIn('choices=missing', stderr)
+        self.assertIn('top_level_keys=2', stderr)
         self.assert_clean(stderr)
+
+    def test_sensitive_key_name_does_not_reach_the_log(self):
+        """Review fixture: the marker sits in the KEY NAME of the JSON body."""
+        key_marker = 'SENSITIVE_KEY_NAME_DO_NOT_LOG'
+        body = ('{"' + key_marker + '": "x", "status": "error"}').encode()
+        stub = _StubResponse(200, body, 'application/json')
+        stdout, stderr, code = _run_agent(monkey_response=stub)
+        self.assertEqual(code, 1)
+        self.assertIn('AUREX_MODEL_SHAPE_INVALID', stderr)
+        self.assertIn('choices=missing', stderr)
+        self.assertIn('top_level_keys=2', stderr)
+        combined = stdout + stderr
+        self.assertNotIn(key_marker, combined)
+        self.assertNotIn('DO_NOT_LOG', combined)
+        self.assert_clean(combined)
 
     def test_html_error_page_does_not_reach_the_log(self):
         stub = _StubResponse(502, (BODY_MARKER + '<html>').encode(), 'text/html')

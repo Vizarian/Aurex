@@ -51,8 +51,11 @@ def model_text(result):
 
     A 200 with valid JSON is not proof of a chat completion: a gateway can answer
     `{"message": "Not Found"}` or an error object with a success status. Name the
-    shape that arrived (top-level keys only, never values) instead of letting a
-    bare KeyError stand in for a diagnosis.
+    shape that arrived with a fixed descriptor (a few safe words plus the bounded
+    top-level key count) instead of letting a bare KeyError stand in for a
+    diagnosis. Key names are untrusted data: an upstream response can carry a
+    hostile or sensitive string in a key name, so neither key names nor values
+    ever reach the diagnostic.
     """
     if not isinstance(result, dict):
         raise RuntimeError(
@@ -60,8 +63,11 @@ def model_text(result):
         )
     choices = result.get("choices")
     if not isinstance(choices, list):
-        keys = ",".join(sorted(str(k) for k in result))[:200] or "none"
-        raise RuntimeError("AUREX_MODEL_SHAPE_INVALID stage=model keys=" + keys)
+        shape = "missing" if "choices" not in result else "not_list"
+        raise RuntimeError(
+            "AUREX_MODEL_SHAPE_INVALID stage=model choices=" + shape
+            + " top_level_keys=" + str(len(result))
+        )
     if not choices:
         raise RuntimeError("AUREX_MODEL_SHAPE_INVALID stage=model content=absent")
     message = choices[0].get("message") if isinstance(choices[0], dict) else None
