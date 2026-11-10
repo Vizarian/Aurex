@@ -73,7 +73,21 @@ jobs:
                                   category = "structured_error_other"
                   except (ValueError, TypeError):
                       pass
+              # Emit only a fixed allowlist of safe network metadata, never header values.
+              headers = exc.headers
+              header_names = {name.lower() for name in headers.keys()} if headers else set()
+              indicators = {
+                  "content_type": media if media in ("application/json", "text/html", "text/plain") else "other",
+                  "server_header": int("server" in header_names),
+                  "via_header": int("via" in header_names),
+                  "cf_ray_header": int("cf-ray" in header_names),
+                  "cf_cache_header": int("cf-cache-status" in header_names),
+                  "retry_after_header": int("retry-after" in header_names),
+                  "request_id_header": int(any(name in header_names for name in ("x-request-id", "x-groq-request-id"))),
+                  "body_size": "over_8k" if len(raw_error) > 8192 else ("empty" if not raw_error else "nonempty"),
+              }
               print(f"AUREX_GROQ_INFERENCE_HTTP_FAILURE status={status} category={category} provider_code={provider_code}")
+              print("AUREX_GROQ_NETWORK_METADATA " + " ".join(f"{name}={value}" for name, value in indicators.items()))
               sys.exit(1)
           except (urllib.error.URLError, TimeoutError):
               print("AUREX_GROQ_INFERENCE_TRANSPORT_FAILURE")
