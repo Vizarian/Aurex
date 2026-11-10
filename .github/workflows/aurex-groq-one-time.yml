@@ -1,0 +1,58 @@
+name: Aurex Groq one-time connectivity check
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/aurex-groq-one-time.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  groq-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: One bounded Groq inference request
+        env:
+          GROQ_SECRET_API: ${{ secrets.GROQ_SECRET_API }}
+        run: |
+          python - <<'PY'
+          import json, os, sys, urllib.request, urllib.error
+          key = os.environ.get("GROQ_SECRET_API", "").strip()
+          if not key:
+              print("AUREX_GROQ_MISSING_SECRET")
+              sys.exit(2)
+          payload = json.dumps({
+              "model": "llama-3.1-8b-instant",
+              "messages": [{"role": "user", "content": "Reply with exactly AUREX_GROQ_OK"}],
+              "temperature": 0,
+              "max_tokens": 32
+          }).encode()
+          req = urllib.request.Request(
+              "https://api.groq.com/openai/v1/chat/completions",
+              data=payload, method="POST",
+              headers={"Authorization": "Bearer " + key, "Content-Type": "application/json"})
+          try:
+              with urllib.request.urlopen(req, timeout=25) as response:
+                  raw = response.read(32769)
+                  status = response.status
+                  content_type = response.headers.get_content_type()
+          except urllib.error.HTTPError as exc:
+              print(f"AUREX_GROQ_HTTP_FAILURE status={exc.code}")
+              sys.exit(1)
+          except (urllib.error.URLError, TimeoutError):
+              print("AUREX_GROQ_TRANSPORT_FAILURE")
+              sys.exit(1)
+          if len(raw) > 32768 or content_type != "application/json":
+              print(f"AUREX_GROQ_UNEXPECTED_HTTP status={status} content_type={content_type} bytes={len(raw)}")
+              sys.exit(1)
+          try:
+              data = json.loads(raw)
+              answer = data["choices"][0]["message"]["content"]
+          except (ValueError, KeyError, IndexError, TypeError):
+              print("AUREX_GROQ_INVALID_RESPONSE")
+              sys.exit(1)
+          ok = isinstance(answer, str) and answer.strip() == "AUREX_GROQ_OK"
+          print("AUREX_GROQ_SMOKE_" + ("PASS" if ok else "FAIL"))
+          sys.exit(0 if ok else 1)
+          PY
