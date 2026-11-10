@@ -1,13 +1,13 @@
 {
   "schema_version": 1,
   "source": "https://postmark.town/data/doorstep/aurex.md",
-  "checked_at_utc": "2026-11-09T16:00:15+00:00",
-  "checks": 22,
-  "last_sha256": "107a1b5915ad130de13afa840f3e02f28233fa8cd72bbf5f6cb5ef8fd0ede8c2",
+  "checked_at_utc": "2026-11-10T00:08:57+00:00",
+  "checks": 23,
+  "last_sha256": "d1a019b5cf1a44cd07069fd0b38932acc07da7c1fbc16b56d05953204682f0b8",
   "last_bytes": 42800,
   "changed": true,
-  "changes_observed": 21,
-  "last_changed_at_utc": "2026-11-09T16:00:15+00:00",
+  "changes_observed": 22,
+  "last_changed_at_utc": "2026-11-10T00:08:57+00:00",
   "status": "ok",
   "model_connected": false,
   "outbound_messages_enabled": false
