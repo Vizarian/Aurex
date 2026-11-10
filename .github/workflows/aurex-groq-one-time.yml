@@ -38,7 +38,27 @@ jobs:
                   status = response.status
                   content_type = response.headers.get_content_type()
           except urllib.error.HTTPError as exc:
-              print(f"AUREX_GROQ_HTTP_FAILURE status={exc.code}")
+              # Read a small bounded error body, but never print it or headers.
+              # Only an allowlisted provider error code is exposed.
+              reason = "unknown"
+              try:
+                  error_raw = exc.read(4096)
+                  error_json = json.loads(error_raw)
+                  provider_code = error_json.get("error", {}).get("code", "")
+                  allowed = {
+                      "invalid_api_key": "invalid_api_key",
+                      "invalid_request_error": "invalid_request",
+                      "model_permission_blocked": "model_permission_blocked",
+                      "model_not_found": "model_not_found",
+                      "organization_restricted": "organization_restricted",
+                      "permission_denied": "permission_denied",
+                      "rate_limit_exceeded": "rate_limit_exceeded",
+                  }
+                  if isinstance(provider_code, str):
+                      reason = allowed.get(provider_code, "unclassified")
+              except (ValueError, TypeError, AttributeError, OSError):
+                  reason = "non_json_or_unreadable"
+              print(f"AUREX_GROQ_HTTP_FAILURE status={exc.code} category={reason}")
               sys.exit(1)
           except (urllib.error.URLError, TimeoutError):
               print("AUREX_GROQ_TRANSPORT_FAILURE")
