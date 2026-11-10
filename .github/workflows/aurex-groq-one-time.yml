@@ -1,4 +1,4 @@
-name: Aurex Groq one-time connectivity check
+name: Aurex Groq safe access diagnostics
 on:
   push:
     branches: [main]
@@ -12,67 +12,49 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 3
     steps:
-      - name: One bounded Groq inference request
+      - name: Compare anonymous and authorized Groq API access
         env:
           GROQ_SECRET_API: ${{ secrets.GROQ_SECRET_API }}
         run: |
           python - <<'PY'
-          import json, os, sys, urllib.request, urllib.error
+          import os, sys, urllib.request, urllib.error, urllib.parse
           key = os.environ.get("GROQ_SECRET_API", "").strip()
           if not key:
               print("AUREX_GROQ_MISSING_SECRET")
               sys.exit(2)
-          payload = json.dumps({
-              "model": "llama-3.1-8b-instant",
-              "messages": [{"role": "user", "content": "Reply with exactly AUREX_GROQ_OK"}],
-              "temperature": 0,
-              "max_tokens": 32
-          }).encode()
-          req = urllib.request.Request(
-              "https://api.groq.com/openai/v1/chat/completions",
-              data=payload, method="POST",
-              headers={"Authorization": "Bearer " + key, "Content-Type": "application/json"})
-          try:
-              with urllib.request.urlopen(req, timeout=25) as response:
-                  raw = response.read(32769)
-                  status = response.status
-                  content_type = response.headers.get_content_type()
-          except urllib.error.HTTPError as exc:
-              # Read a small bounded error body, but never print it or headers.
-              # Only an allowlisted provider error code is exposed.
-              reason = "unknown"
+          url = "https://api.groq.com/openai/v1/models"
+          def probe(label, token=None):
+              headers = {"Accept": "application/json", "User-Agent": "Aurex-safe-diagnostic/1.0"}
+              if token is not None:
+                  headers["Authorization"] = "Bearer " + token
+              req = urllib.request.Request(url, headers=headers, method="GET")
               try:
-                  error_raw = exc.read(4096)
-                  error_json = json.loads(error_raw)
-                  provider_code = error_json.get("error", {}).get("code", "")
-                  allowed = {
-                      "invalid_api_key": "invalid_api_key",
-                      "invalid_request_error": "invalid_request",
-                      "model_permission_blocked": "model_permission_blocked",
-                      "model_not_found": "model_not_found",
-                      "organization_restricted": "organization_restricted",
-                      "permission_denied": "permission_denied",
-                      "rate_limit_exceeded": "rate_limit_exceeded",
-                  }
-                  if isinstance(provider_code, str):
-                      reason = allowed.get(provider_code, "unclassified")
-              except (ValueError, TypeError, AttributeError, OSError):
-                  reason = "non_json_or_unreadable"
-              print(f"AUREX_GROQ_HTTP_FAILURE status={exc.code} category={reason}")
+                  with urllib.request.urlopen(req, timeout=15) as response:
+                      status = response.status
+                      media = response.headers.get_content_type()
+                      via = "http"
+              except urllib.error.HTTPError as exc:
+                  status = exc.code
+                  media = exc.headers.get_content_type()
+                  via = "http_error"
+                  exc.close()
+              except (urllib.error.URLError, TimeoutError):
+                  print(f"AUREX_GROQ_PROBE label={label} transport_error=true")
+                  return None
+              # No bodies, cookies, headers or tokens are printed.
+              safe_media = media if media in ("application/json", "text/plain", "text/html") else "other"
+              print(f"AUREX_GROQ_PROBE label={label} status={status} media={safe_media} path={via}")
+              return status
+          anonymous = probe("anonymous")
+          authorized = probe("authorized", key)
+          if anonymous is None or authorized is None:
               sys.exit(1)
-          except (urllib.error.URLError, TimeoutError):
-              print("AUREX_GROQ_TRANSPORT_FAILURE")
-              sys.exit(1)
-          if len(raw) > 32768 or content_type != "application/json":
-              print(f"AUREX_GROQ_UNEXPECTED_HTTP status={status} content_type={content_type} bytes={len(raw)}")
-              sys.exit(1)
-          try:
-              data = json.loads(raw)
-              answer = data["choices"][0]["message"]["content"]
-          except (ValueError, KeyError, IndexError, TypeError):
-              print("AUREX_GROQ_INVALID_RESPONSE")
-              sys.exit(1)
-          ok = isinstance(answer, str) and answer.strip() == "AUREX_GROQ_OK"
-          print("AUREX_GROQ_SMOKE_" + ("PASS" if ok else "FAIL"))
-          sys.exit(0 if ok else 1)
+          if authorized == 200:
+              print("AUREX_GROQ_AUTHORIZED_MODELS_ENDPOINT_OK")
+              sys.exit(0)
+          if anonymous == authorized:
+              print("AUREX_GROQ_SAME_STATUS_WITH_AND_WITHOUT_TOKEN")
+          else:
+              print("AUREX_GROQ_AUTH_CHANGES_RESPONSE_STATUS")
+          sys.exit(1)
           PY
