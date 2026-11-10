@@ -40,8 +40,40 @@ jobs:
                   media = response.headers.get_content_type()
                   raw = response.read(32769)
           except urllib.error.HTTPError as exc:
-              print(f"AUREX_GROQ_INFERENCE_HTTP_FAILURE status={exc.code}")
-              exc.close()
+              status = exc.code
+              media = exc.headers.get_content_type() if exc.headers else "unknown"
+              try:
+                  raw_error = exc.read(8193)
+              finally:
+                  exc.close()
+              category = "non_json_or_unreadable"
+              provider_code = "not_available"
+              if len(raw_error) <= 8192 and media == "application/json":
+                  try:
+                      error_obj = json.loads(raw_error)
+                      if isinstance(error_obj, dict):
+                          details = error_obj.get("error")
+                          if isinstance(details, dict):
+                              raw_code = details.get("code")
+                              if isinstance(raw_code, str):
+                                  allowed_codes = {
+                                      "invalid_api_key", "invalid_request_error",
+                                      "model_not_found", "model_permission_denied",
+                                      "permission_denied", "insufficient_quota",
+                                      "rate_limit_exceeded", "tokens_limit_reached",
+                                      "organization_restricted", "access_denied",
+                                  }
+                                  if raw_code in allowed_codes:
+                                      provider_code = raw_code
+                              raw_type = details.get("type")
+                              if raw_type in ("authentication_error", "permission_error",
+                                              "invalid_request_error", "rate_limit_error"):
+                                  category = raw_type
+                              else:
+                                  category = "structured_error_other"
+                  except (ValueError, TypeError):
+                      pass
+              print(f"AUREX_GROQ_INFERENCE_HTTP_FAILURE status={status} category={category} provider_code={provider_code}")
               sys.exit(1)
           except (urllib.error.URLError, TimeoutError):
               print("AUREX_GROQ_INFERENCE_TRANSPORT_FAILURE")
