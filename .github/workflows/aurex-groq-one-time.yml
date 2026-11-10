@@ -1,4 +1,4 @@
-name: Aurex Groq safe access diagnostics
+name: Aurex Groq model availability diagnostic
 on:
   push:
     branches: [main]
@@ -17,7 +17,7 @@ jobs:
           GROQ_SECRET_API: ${{ secrets.GROQ_SECRET_API }}
         run: |
           python - <<'PY'
-          import os, sys, urllib.request, urllib.error, urllib.parse
+          import os, sys, json, urllib.request, urllib.error
           key = os.environ.get("GROQ_SECRET_API", "").strip()
           if not key:
               print("AUREX_GROQ_MISSING_SECRET")
@@ -45,13 +45,33 @@ jobs:
               safe_media = media if media in ("application/json", "text/plain", "text/html") else "other"
               print(f"AUREX_GROQ_PROBE label={label} status={status} media={safe_media} path={via}")
               return status
+          # Inspect only the model identifiers returned by the authorized models API.
+          # No response bodies, IDs, or credentials are printed.
+          def model_availability():
+              req = urllib.request.Request(
+                  url, headers={"Authorization": "Bearer " + key,
+                                "Accept": "application/json"}, method="GET")
+              try:
+                  with urllib.request.urlopen(req, timeout=15) as response:
+                      data = json.load(response)
+              except (urllib.error.HTTPError, urllib.error.URLError,
+                      TimeoutError, ValueError, TypeError):
+                  print("AUREX_GROQ_MODEL_LIST_UNAVAILABLE")
+                  return None
+              models = data.get("data", []) if isinstance(data, dict) else []
+              ids = {item.get("id") for item in models if isinstance(item, dict)}
+              target = "llama-3.1-8b-instant"
+              print("AUREX_GROQ_TARGET_MODEL_LISTED=" + str(target in ids).lower())
+              print("AUREX_GROQ_MODEL_COUNT=" + str(len(ids)))
+              return target in ids
           anonymous = probe("anonymous")
           authorized = probe("authorized", key)
           if anonymous is None or authorized is None:
               sys.exit(1)
           if authorized == 200:
               print("AUREX_GROQ_AUTHORIZED_MODELS_ENDPOINT_OK")
-              sys.exit(0)
+              available = model_availability()
+              sys.exit(0 if available else 1)
           if anonymous == authorized:
               print("AUREX_GROQ_SAME_STATUS_WITH_AND_WITHOUT_TOKEN")
           else:
