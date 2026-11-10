@@ -1,0 +1,111 @@
+name: Aurex Groq GPT OSS 20B single inference test
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/aurex-groq-one-time.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  groq-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: One bounded Groq GPT OSS 20B inference request
+        env:
+          GROQ_SECRET_API: ${{ secrets.GROQ_SECRET_API }}
+        run: |
+          python - <<'PY'
+          import json, os, sys, urllib.error, urllib.request
+          key = os.getenv("GROQ_SECRET_API", "").strip()
+          if not key:
+              print("AUREX_GROQ_MISSING_SECRET")
+              sys.exit(2)
+          payload = json.dumps({
+              "model": "openai/gpt-oss-20b",
+              "messages": [{"role": "user", "content": "Reply with the single word PING"}],
+              "max_completion_tokens": 128,
+              "temperature": 0
+          }).encode("utf-8")
+          request = urllib.request.Request(
+              "https://api.groq.com/openai/v1/chat/completions",
+              data=payload,
+              headers={"Authorization": "Bearer " + key,
+                       "Content-Type": "application/json"},
+              method="POST")
+          try:
+              with urllib.request.urlopen(request, timeout=25) as response:
+                  status = response.status
+                  media = response.headers.get_content_type()
+                  raw = response.read(32769)
+          except urllib.error.HTTPError as exc:
+              status = exc.code
+              media = exc.headers.get_content_type() if exc.headers else "unknown"
+              try:
+                  raw_error = exc.read(8193)
+              finally:
+                  exc.close()
+              category = "non_json_or_unreadable"
+              provider_code = "not_available"
+              if len(raw_error) <= 8192 and media == "application/json":
+                  try:
+                      error_obj = json.loads(raw_error)
+                      if isinstance(error_obj, dict):
+                          details = error_obj.get("error")
+                          if isinstance(details, dict):
+                              raw_code = details.get("code")
+                              if isinstance(raw_code, str):
+                                  allowed_codes = {
+                                      "invalid_api_key", "invalid_request_error",
+                                      "model_not_found", "model_permission_denied",
+                                      "permission_denied", "insufficient_quota",
+                                      "rate_limit_exceeded", "tokens_limit_reached",
+                                      "organization_restricted", "access_denied",
+                                  }
+                                  if raw_code in allowed_codes:
+                                      provider_code = raw_code
+                              raw_type = details.get("type")
+                              if raw_type in ("authentication_error", "permission_error",
+                                              "invalid_request_error", "rate_limit_error"):
+                                  category = raw_type
+                              else:
+                                  category = "structured_error_other"
+                  except (ValueError, TypeError):
+                      pass
+              # Emit only a fixed allowlist of safe network metadata, never header values.
+              headers = exc.headers
+              header_names = {name.lower() for name in headers.keys()} if headers else set()
+              indicators = {
+                  "content_type": media if media in ("application/json", "text/html", "text/plain") else "other",
+                  "server_header": int("server" in header_names),
+                  "via_header": int("via" in header_names),
+                  "cf_ray_header": int("cf-ray" in header_names),
+                  "cf_cache_header": int("cf-cache-status" in header_names),
+                  "retry_after_header": int("retry-after" in header_names),
+                  "request_id_header": int(any(name in header_names for name in ("x-request-id", "x-groq-request-id"))),
+                  "body_size": "over_8k" if len(raw_error) > 8192 else ("empty" if not raw_error else "nonempty"),
+              }
+              print(f"AUREX_GROQ_INFERENCE_HTTP_FAILURE status={status} category={category} provider_code={provider_code}")
+              print("AUREX_GROQ_NETWORK_METADATA " + " ".join(f"{name}={value}" for name, value in indicators.items()))
+              sys.exit(1)
+          except (urllib.error.URLError, TimeoutError):
+              print("AUREX_GROQ_INFERENCE_TRANSPORT_FAILURE")
+              sys.exit(1)
+          if len(raw) > 32768 or media != "application/json":
+              print(f"AUREX_GROQ_INFERENCE_UNEXPECTED_RESPONSE status={status}")
+              sys.exit(1)
+          try:
+              result = json.loads(raw)
+              choices = result["choices"]
+              message = choices[0]["message"]
+              answer = message.get("content")
+          except (ValueError, KeyError, IndexError, TypeError, AttributeError):
+              print("AUREX_GROQ_INFERENCE_INVALID_JSON_STRUCTURE")
+              sys.exit(1)
+          if isinstance(answer, str) and answer.strip():
+              print("AUREX_GROQ_INFERENCE_PASS")
+              sys.exit(0)
+          print("AUREX_GROQ_INFERENCE_EMPTY_CONTENT")
+          sys.exit(1)
+          PY
