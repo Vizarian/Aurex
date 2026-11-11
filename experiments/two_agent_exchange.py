@@ -15,7 +15,7 @@ def ask(agent, instruction):
     prompt = "<|im_start|>system\n" + instruction["system"] + "<|im_end|>\n<|im_start|>user\n" + instruction["user"] + "<|im_end|>\n<|im_start|>assistant\n"
     cmd = [CLI, "-m", MODEL, "-p", prompt, "-n", "160", "-c", "1024", "-t", "2", "--temp", "0.5", "--no-display-prompt", "--simple-io"]
     started = time.monotonic()
-    result = subprocess.run(cmd, capture_output=True, text=True, timeout=180, check=False)
+    result = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=180, check=False)
     (OUT / (agent + "-stdout.txt")).write_text(result.stdout)
     (OUT / (agent + "-stderr.txt")).write_text(result.stderr)
     if result.returncode != 0:
