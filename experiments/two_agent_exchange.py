@@ -21,7 +21,9 @@ def ask(agent, instruction):
     if result.returncode != 0:
         raise RuntimeError(agent + " model process failed with " + str(result.returncode))
     answer = result.stdout.strip().split("<|im_end|>")[0].strip()
-    if "Loading model..." in answer or "available commands:" in answer or "<|im_start|>" in answer:\n        raise RuntimeError(agent + " returned CLI interface text instead of a generated response")\n    if len(answer) < 12:
+    if "Loading model..." in answer or "available commands:" in answer or "<|im_start|>" in answer:
+        raise RuntimeError(agent + " returned CLI interface text instead of a generated response")
+    if len(answer) < 12:
         raise RuntimeError(agent + " output was too short")
     return {"agent": agent, "prompt": instruction, "answer": answer, "seconds": round(time.monotonic() - started, 2)}
 
