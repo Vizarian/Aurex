@@ -22,7 +22,7 @@ jobs:
         run: |
           git clone --depth 1 https://github.com/ggml-org/llama.cpp.git /tmp/llama.cpp
           cmake -S /tmp/llama.cpp -B /tmp/llama.cpp/build -DGGML_CUDA=OFF -DLLAMA_BUILD_TESTS=OFF -DLLAMA_BUILD_EXAMPLES=ON
-          cmake --build /tmp/llama.cpp/build --config Release -j 2 --target llama-cli
+          cmake --build /tmp/llama.cpp/build --config Release -j 2 --target llama-server
           mkdir -p receipts/two-agent
           git -C /tmp/llama.cpp rev-parse HEAD > receipts/two-agent/llama_cpp_commit.txt
       - name: Download model
