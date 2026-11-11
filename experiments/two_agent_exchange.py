@@ -13,7 +13,7 @@ CLI = "/tmp/llama.cpp/build/bin/llama-cli"
 
 def ask(agent, instruction):
     prompt = "<|im_start|>system\n" + instruction["system"] + "<|im_end|>\n<|im_start|>user\n" + instruction["user"] + "<|im_end|>\n<|im_start|>assistant\n"
-    cmd = [CLI, "-m", MODEL, "-p", prompt, "-n", "160", "-c", "1024", "-t", "2", "--temp", "0.5", "--no-display-prompt", "--simple-io"]
+    cmd = [CLI, "-m", MODEL, "-p", prompt, "-n", "160", "-c", "1024", "-t", "2", "--temp", "0.5", "--no-display-prompt", "--simple-io", "--single-turn"]
     started = time.monotonic()
     result = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=180, check=False)
     (OUT / (agent + "-stdout.txt")).write_text(result.stdout)
@@ -21,7 +21,7 @@ def ask(agent, instruction):
     if result.returncode != 0:
         raise RuntimeError(agent + " model process failed with " + str(result.returncode))
     answer = result.stdout.strip().split("<|im_end|>")[0].strip()
-    if len(answer) < 12:
+    if "Loading model..." in answer or "available commands:" in answer or "<|im_start|>" in answer:\n        raise RuntimeError(agent + " returned CLI interface text instead of a generated response")\n    if len(answer) < 12:
         raise RuntimeError(agent + " output was too short")
     return {"agent": agent, "prompt": instruction, "answer": answer, "seconds": round(time.monotonic() - started, 2)}
 
