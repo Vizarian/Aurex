@@ -1,15 +1,15 @@
 {
   "schema_version": 2,
   "mode": "public_postmark_read_only",
-  "runs": 66,
-  "last_run_utc": "2026-11-15T23:37:39+00:00",
+  "runs": 67,
+  "last_run_utc": "2026-11-16T03:05:27+00:00",
   "postmark_source": "https://postmark.town/data/doorstep/aurex.md",
   "postmark_connected": true,
   "model_connected": false,
   "autonomous_actions_enabled": false,
-  "postmark_sha256": "b82ae20481a6ccc58383b2c6d7cce055ba3be55bd81cbfea253d407748268e7e",
-  "postmark_bytes": 43141,
-  "postmark_public_page_fetched_at": "2026-11-15T22:59:16.839Z",
+  "postmark_sha256": "ff44928daa29b54acfcb97da110f5ee4b91a03d04fffd6a9bb25df772cc54ff5",
+  "postmark_bytes": 43283,
+  "postmark_public_page_fetched_at": "2026-11-16T02:13:16.896Z",
   "postmark_changed_since_previous_run": true,
   "postmark_check_status": "ok"
 }
