@@ -1,11 +1,11 @@
 {
-  "checked_at": "2026-11-15T21:42:28.344277+00:00",
+  "checked_at": "2026-11-16T01:22:56.008490+00:00",
   "goal": "maintain_continuity",
   "decisions": [
     {
-      "event_key": "92f17027f16e49e1e10199876696ac0a5fc15c8434156c09017e8229d57ac6ae",
-      "action": "skip",
-      "reason": "duplicate event",
+      "event_key": "efa71f476ec32d61c6ee625e2b2dd1397a7e9ee29b25d723b1b9a913167108c5",
+      "action": "observe",
+      "reason": "new event recorded",
       "draft": ""
     }
   ],
