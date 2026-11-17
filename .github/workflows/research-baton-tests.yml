@@ -1,0 +1,21 @@
+name: Aurex research baton tests
+on:
+  push:
+    paths:
+      - 'research_baton.py'
+      - 'tests/test_research_baton.py'
+      - '.github/workflows/research-baton-tests.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  offline-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate research baton and restart tests
+        run: python -m unittest discover -s tests -p 'test_research_baton.py' -v

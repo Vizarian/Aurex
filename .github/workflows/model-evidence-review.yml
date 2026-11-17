@@ -1,0 +1,32 @@
+name: Aurex model evidence review
+on:
+  push:
+    paths:
+      - 'experiments/model_evidence_review.py'
+      - '.github/workflows/model-evidence-review.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+  models: read
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Model review of real GitHub Actions evidence
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          AUREX_MODEL: openai/gpt-4o-mini
+        run: python -m experiments.model_evidence_review
+      - name: Preserve receipt or diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: model-evidence-review
+          path: receipts/model-evidence-review.json
+          if-no-files-found: warn

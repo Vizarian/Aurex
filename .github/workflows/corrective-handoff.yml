@@ -1,0 +1,26 @@
+name: Aurex corrective handoff experiment
+on:
+  push:
+    paths:
+      - 'experiments/corrective_handoff.py'
+      - '.github/workflows/corrective-handoff.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  corrective-handoff:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run persisted-state correction experiment
+        run: python -m experiments.corrective_handoff receipts/corrective-handoff.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: corrective-handoff-receipt
+          path: receipts/corrective-handoff.json
+          if-no-files-found: warn
