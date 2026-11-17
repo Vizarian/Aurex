@@ -33,5 +33,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: live-investigation-report
-          path: |\n            receipts/live-investigation.json\n            receipts/next-action.json
+          path: |
+            receipts/live-investigation.json
+            receipts/next-action.json
           if-no-files-found: warn
