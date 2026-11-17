@@ -28,6 +28,10 @@ jobs:
         run: python -m experiments.live_investigator
       - name: Choose next action from observed failures
         run: python -m experiments.next_action
+      - name: Execute chosen read-only diagnostic
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python -m experiments.execute_next_action
       - name: Upload observed evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -36,4 +40,5 @@ jobs:
           path: |
             receipts/live-investigation.json
             receipts/next-action.json
+            receipts/executed-action.json
           if-no-files-found: warn
