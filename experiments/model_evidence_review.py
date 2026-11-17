@@ -77,5 +77,14 @@ if __name__ == "__main__":
         path.write_text(json.dumps(receipt, indent=2) + "\n")
         print("MODEL_EVIDENCE_REVIEW_PASS " + json.dumps(receipt))
     except Exception as exc:
+        # Persist a failure receipt even when the model endpoint returns invalid data.
+        # This is a failed experiment, not a simulated successful model response.
+        failure = {"experiment": "model-evidence-review", "status": "failed",
+                   "model_invoked_successfully": False,
+                   "error_type": type(exc).__name__, "error": str(exc)[:500],
+                   "run_under_review": RUN_ID}
+        path = Path("receipts/model-evidence-review.json")
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(failure, indent=2) + "\n")
         print("MODEL_EVIDENCE_REVIEW_FAILED " + type(exc).__name__ + ": " + str(exc), file=sys.stderr)
         raise
