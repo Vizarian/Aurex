@@ -1,7 +1,11 @@
-name: Aurex two-agent local exchange (manual only)
+name: Aurex two-agent local exchange
 
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/two-agent-local-exchange.yml'
+      - 'experiments/two_agent_exchange.py'
 
 permissions:
   contents: read
