@@ -28,6 +28,8 @@ jobs:
         run: python -m experiments.live_investigator
       - name: Choose next action from observed failures
         run: python -m experiments.next_action
+      - name: Bound repeated diagnostics within this run
+        run: python -m experiments.retry_guard
       - name: Execute chosen read-only diagnostic
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -42,6 +44,8 @@ jobs:
           path: |
             receipts/live-investigation.json
             receipts/next-action.json
+            receipts/bounded-decision.json
+            receipts/attempt-ledger.json
             receipts/executed-action.json
             receipts/fallback-decision.json
           if-no-files-found: warn
