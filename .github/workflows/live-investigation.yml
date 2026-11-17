@@ -32,6 +32,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: python -m experiments.execute_next_action
+      - name: Choose fallback after live diagnostic
+        run: python -m experiments.fallback_policy
       - name: Upload observed evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -41,4 +43,5 @@ jobs:
             receipts/live-investigation.json
             receipts/next-action.json
             receipts/executed-action.json
+            receipts/fallback-decision.json
           if-no-files-found: warn
