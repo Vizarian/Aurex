@@ -53,7 +53,7 @@ def execute(decision):
         return {"status": "transport_error", "error_type": type(exc).__name__}
 
 if __name__ == "__main__":
-    decision = json.loads(Path("receipts/next-action.json").read_text())
+    decision = json.loads(Path("receipts/bounded-decision.json").read_text())
     result = execute(decision)
     path = Path("receipts/executed-action.json")
     path.write_text(json.dumps(result, indent=2) + "\n")
