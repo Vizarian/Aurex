@@ -3,6 +3,10 @@ on:
   push:
     paths:
       - 'experiments/live_investigator.py'
+      - 'experiments/next_action.py'
+      - 'experiments/retry_guard.py'
+      - 'experiments/execute_next_action.py'
+      - 'experiments/fallback_policy.py'
       - '.github/workflows/live-investigation.yml'
   workflow_dispatch:
   schedule:
